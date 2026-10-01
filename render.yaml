@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: bet-crm-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: ohio
+    envVars:
+      - key: APP_NAME
+        value: "BET CRM"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        value: base64:XG8d2m0qL5A8Z3rG6e4oY1uI7vK2wM5nB9xP3cT1vA0=
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        value: ep-orange-wildflower-b4bdrm7f.c-6.us-east-2.aws.neon.tech
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        value: neondb
+      - key: DB_USERNAME
+        value: neondb_owner
+      - key: DB_PASSWORD
+        value: npg_ZBT4MQw9YXzC
+      - key: DB_SSLMODE
+        value: require
+      - key: DB_SCHEMA
+        value: public
+      - key: CACHE_STORE
+        value: file
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
