@@ -44,7 +44,7 @@ return new class extends Migration
             $table->string('source', 100)->nullable();
             $table->string('affiliate', 100)->nullable();
             $table->string('promo_code', 100)->nullable();
-            $table->json('custom_fields')->nullable();
+            $table->jsonb('custom_fields')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->timestamp('last_activity_at')->nullable();
             $table->timestamp('registered_at')->nullable();

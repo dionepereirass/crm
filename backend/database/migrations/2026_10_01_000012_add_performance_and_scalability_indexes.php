@@ -48,7 +48,7 @@ return new class extends Migration
         // 7. Auditoria de Privacidade e LGPD: Acelera trilhas de auditoria por período e por entidade
         Schema::table('audit_logs', function (Blueprint $table) {
             $table->index(['platform_id', 'action', 'created_at'], 'idx_audit_logs_platform_action_created');
-            $table->index(['platform_id', 'target_type', 'target_id'], 'idx_audit_logs_platform_target');
+            $table->index(['platform_id', 'resource_type', 'created_at'], 'idx_audit_logs_platform_resource_created');
         });
     }
 
@@ -59,7 +59,7 @@ return new class extends Migration
     {
         Schema::table('audit_logs', function (Blueprint $table) {
             $table->dropIndex('idx_audit_logs_platform_action_created');
-            $table->dropIndex('idx_audit_logs_platform_target');
+            $table->dropIndex('idx_audit_logs_platform_resource_created');
         });
 
         Schema::table('automation_runs', function (Blueprint $table) {
