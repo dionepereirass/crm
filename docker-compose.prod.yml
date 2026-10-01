@@ -1,0 +1,205 @@
+# ==============================================================================
+# BET CRM — Production Docker Compose Configuration
+# ==============================================================================
+
+services:
+  # Reverse Proxy & SSL Termination
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: bet_crm_prod_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/production.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - backend_public:/var/www/backend/public:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - frontend_net
+      - backend_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # Frontend Next.js Production Server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bet_crm_prod_frontend
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - frontend_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
+
+  # Backend PHP 8.3-FPM Production Service
+  backend:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: bet_crm_prod_backend
+    restart: always
+    working_dir: /var/www/backend
+    env_file:
+      - .env.production
+    expose:
+      - "9000"
+    volumes:
+      - backend_storage:/var/www/backend/storage
+      - backend_public:/var/www/backend/public
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - data_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1536M
+
+  # Laravel Horizon Worker Supervisor (Fast & Batch Lanes)
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: bet_crm_prod_horizon
+    restart: always
+    working_dir: /var/www/backend
+    command: php artisan horizon
+    env_file:
+      - .env.production
+    volumes:
+      - backend_storage:/var/www/backend/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - data_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 2048M
+
+  # Laravel Scheduler Daemon
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: bet_crm_prod_scheduler
+    restart: always
+    working_dir: /var/www/backend
+    command: php artisan schedule:work
+    env_file:
+      - .env.production
+    volumes:
+      - backend_storage:/var/www/backend/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - data_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # PostgreSQL 16 Database (Private Network — No Public Ports Exposed)
+  postgres:
+    image: postgres:16-alpine
+    container_name: bet_crm_prod_postgres
+    restart: always
+    env_file:
+      - .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$DB_USERNAME -d $$DB_DATABASE"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 2560M
+
+  # Redis 7 Cache & Queue (Private Network — Password Protected)
+  redis:
+    image: redis:7-alpine
+    container_name: bet_crm_prod_redis
+    restart: always
+    command: sh -c "redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --maxmemory 1gb --maxmemory-policy volatile-lru"
+    env_file:
+      - .env.production
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+
+networks:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
+  data_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_public:
+    driver: local
+  certbot_conf:
+    driver: local
+  certbot_www:
+    driver: local

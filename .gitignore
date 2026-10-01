@@ -1,0 +1,51 @@
+# Environment files
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+
+# Dependency directories
+/backend/vendor/
+/frontend/node_modules/
+node_modules/
+
+# Next.js build and cache
+/frontend/.next/
+/frontend/out/
+
+# Laravel storage and cache
+/backend/storage/*.key
+/backend/storage/app/*
+!/backend/storage/app/.gitignore
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitignore
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitignore
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitignore
+/backend/storage/logs/*
+!/backend/storage/logs/.gitignore
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore
+
+# Logs & Databases
+*.log
+*.sqlite
+*.sqlite3
+*.dump
+*.sql
+*.sql.gz
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker volume data backups
+/backups/
+/docker/postgres/data/
+/docker/redis/data/
