@@ -29,7 +29,7 @@ COPY . /app
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --prefer-dist
 
 # Create storage structure and ensure permissions
-RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
 
 EXPOSE 8000
