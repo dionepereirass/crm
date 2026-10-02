@@ -1,9 +1,9 @@
 services:
   - type: web
     name: bet-crm-api
-    runtime: docker
-    dockerfilePath: backend/Dockerfile
-    dockerContext: backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     plan: free
     region: ohio
     envVars:

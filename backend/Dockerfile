@@ -25,14 +25,14 @@ WORKDIR /app
 # Copy application source code
 COPY . /app
 
-# Install production PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# Install production PHP dependencies (skip scripts during build)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --prefer-dist
 
 # Create storage structure and ensure permissions
-RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && chmod -R 777 storage bootstrap/cache
 
 EXPOSE 8000
 
-# Start server using the port assigned by the platform ($PORT or fallback to 8000)
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+# Boot Laravel cleanly at runtime using the dynamic PORT provided by Render
+CMD ["sh", "-c", "php artisan package:discover --ansi && php artisan config:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
