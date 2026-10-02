@@ -417,7 +417,127 @@ class AnalyticsService {
     }
 
     const json = await res.json();
-    return json.data;
+    const raw = json.data || {};
+    const rawKpis = raw.kpis || {};
+    const fin = rawKpis.financial || {};
+    const ply = rawKpis.players || {};
+    const bet = rawKpis.betting || {};
+    const mkt = rawKpis.marketing || {};
+    const aut = rawKpis.automations || {};
+
+    const toKpi = (item: any): KpiItem => ({
+      current: Number(item?.current ?? item?.value ?? 0),
+      previous: Number(item?.previous ?? item?.prior_value ?? 0),
+      percentage_change: Number(item?.percentage_change ?? item?.change_percentage ?? 0),
+    });
+
+    const normalizedData: DashboardData = {
+      period: {
+        type: raw.period?.key || "custom",
+        from: raw.period?.current?.from || "",
+        to: raw.period?.current?.to || "",
+        grouping: raw.period?.grouping || "day",
+        prior_from: raw.period?.prior?.from || "",
+        prior_to: raw.period?.prior?.to || "",
+      },
+      kpis: {
+        players: {
+          total_players: toKpi(ply.total_players),
+          new_players: toKpi(ply.new_players),
+          active_players: toKpi(ply.active_players),
+          inactive_players: toKpi(ply.inactive_players),
+          churn_rate: {
+            current: Number(ply.churn_rate?.value ?? ply.churn_rate?.current ?? 0),
+            previous: Number(ply.churn_rate?.prior_value ?? ply.churn_rate?.previous ?? 0),
+            percentage_change: Number(ply.churn_rate?.change_percentage ?? ply.churn_rate?.percentage_change ?? 0),
+          },
+        },
+        financial: {
+          total_deposits_count: toKpi(fin.deposit_count ?? fin.total_deposits_count),
+          total_deposits_amount: toKpi(fin.total_deposit_amount ?? fin.total_deposits_amount),
+          total_withdrawals_count: toKpi(fin.withdrawal_count ?? fin.total_withdrawals_count),
+          total_withdrawals_amount: toKpi(fin.total_withdrawal_amount ?? fin.total_withdrawals_amount),
+          net_balance: toKpi(fin.net_revenue ?? fin.net_balance),
+          average_deposit_ticket: toKpi(fin.average_deposit_ticket),
+          first_time_depositors: toKpi(fin.first_time_depositors),
+        },
+        betting: {
+          has_data: Boolean(bet.total_bets?.value || bet.total_bets?.current || bet.turnover?.value),
+          total_bets: toKpi(bet.total_bets),
+          turnover: toKpi(bet.turnover),
+          total_won: toKpi(bet.bets_won ?? bet.total_won),
+          total_lost: toKpi(bet.bets_lost ?? bet.total_lost),
+          win_rate: {
+            current: Number(bet.win_rate?.value ?? bet.win_rate?.current ?? 0),
+            previous: Number(bet.win_rate?.prior_value ?? bet.win_rate?.previous ?? 0),
+            percentage_change: Number(bet.win_rate?.change_percentage ?? bet.win_rate?.percentage_change ?? 0),
+          },
+        },
+        marketing: {
+          campaigns_count: toKpi(mkt.campaigns_count),
+          messages_sent: toKpi(mkt.messages_sent),
+          messages_delivered: toKpi(mkt.messages_delivered),
+          messages_opened: toKpi(mkt.messages_opened),
+          messages_clicked: toKpi(mkt.messages_clicked),
+          delivery_rate: {
+            current: Number(mkt.delivery_rate?.value ?? mkt.delivery_rate?.current ?? 0),
+            previous: Number(mkt.delivery_rate?.prior_value ?? mkt.delivery_rate?.previous ?? 0),
+            percentage_change: Number(mkt.delivery_rate?.change_percentage ?? mkt.delivery_rate?.percentage_change ?? 0),
+          },
+          open_rate: {
+            current: Number(mkt.open_rate?.value ?? mkt.open_rate?.current ?? 0),
+            previous: Number(mkt.open_rate?.prior_value ?? mkt.open_rate?.previous ?? 0),
+            percentage_change: Number(mkt.open_rate?.change_percentage ?? mkt.open_rate?.percentage_change ?? 0),
+          },
+          click_rate: {
+            current: Number(mkt.click_through_rate?.value ?? mkt.click_rate?.current ?? 0),
+            previous: Number(mkt.click_through_rate?.prior_value ?? mkt.click_rate?.previous ?? 0),
+            percentage_change: Number(mkt.click_through_rate?.change_percentage ?? mkt.click_rate?.percentage_change ?? 0),
+          },
+          ctr: {
+            current: Number(mkt.click_through_rate?.value ?? mkt.ctr?.current ?? 0),
+            previous: Number(mkt.click_through_rate?.prior_value ?? mkt.ctr?.previous ?? 0),
+            percentage_change: Number(mkt.click_through_rate?.change_percentage ?? mkt.ctr?.percentage_change ?? 0),
+          },
+          unsubscribes: toKpi(mkt.unsubscribes),
+        },
+        automations: {
+          active_automations: toKpi(aut.active_automations),
+          total_runs: toKpi(aut.total_runs),
+          completed_runs: toKpi(aut.completed_runs),
+          failed_runs: toKpi(aut.failed_runs),
+          success_rate: {
+            current: Number(aut.success_rate ?? 100),
+            previous: 100,
+            percentage_change: 0,
+          },
+        },
+        providers: rawKpis.providers || {
+          active_providers: 0,
+          inactive_providers: 0,
+          error_providers: 0,
+          circuit_open_providers: 0,
+          total_providers: 0,
+        },
+      },
+      funnel: (raw.marketing_funnel || []).map((f: any) => ({
+        stage: f.stage || "",
+        count: Number(f.count || 0),
+        conversion_rate: Number(f.percentage || 0),
+      })),
+      evolution: (raw.charts?.combined_evolution || []).map((e: any) => ({
+        date: e.date || e.key || "",
+        new_players: Number(e.new_players || 0),
+        active_players: 0,
+        deposits_amount: Number(e.deposits || 0),
+        withdrawals_amount: Number(e.withdrawals || 0),
+        messages_sent: 0,
+        messages_delivered: 0,
+      })),
+      active_alerts: raw.active_alerts || [],
+    };
+
+    return normalizedData;
   }
 
   // ==========================================================================

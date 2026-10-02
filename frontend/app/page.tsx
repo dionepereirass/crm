@@ -550,12 +550,12 @@ export default function DashboardPage() {
                   <div className="bg-[#0d131f] border border-slate-800 rounded-xl p-3 space-y-1">
                     <span className="text-[11px] text-slate-400">Provedores</span>
                     <div className="text-base font-bold text-emerald-400 flex items-center space-x-1">
-                      <span>{kpis.providers.active_providers}</span>
-                      <span className="text-xs text-slate-500">/ {kpis.providers.total_providers}</span>
+                      <span>{kpis?.providers?.active_providers ?? 0}</span>
+                      <span className="text-xs text-slate-500">/ {kpis?.providers?.total_providers ?? 0}</span>
                     </div>
                     <span className="text-[10px] text-slate-500">
-                      {kpis.providers.circuit_open_providers > 0 ? (
-                        <span className="text-rose-400">{kpis.providers.circuit_open_providers} circuito aberto</span>
+                      {(kpis?.providers?.circuit_open_providers ?? 0) > 0 ? (
+                        <span className="text-rose-400">{kpis?.providers?.circuit_open_providers} circuito aberto</span>
                       ) : (
                         "100% Saudáveis"
                       )}
